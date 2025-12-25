@@ -55,7 +55,7 @@
     </script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         #print-area {
             display: none;
@@ -466,6 +466,35 @@
         </div>
     </main>
 
+    <!-- API Key Setup Modal -->
+    <div id="setup-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-gray-900/95 backdrop-blur-xl">
+        <div
+            class="glass-card max-w-md w-full p-8 rounded-3xl border border-white/10 shadow-2xl text-center animate-fade-in-up">
+            <div
+                class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-4">إعداد مفتاح الذكاء الاصطناعي</h2>
+            <p class="text-gray-400 mb-8 text-sm">للبدء، يرجى إدخال مفتاح Gemini API الخاص بك. يتم حفظ المفتاح بشكل آمن
+                في متصفحك فقط.</p>
+
+            <input type="password" id="api-key-input" placeholder="أدخل مفتاح API هنا..."
+                class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-yellow-500 outline-none transition-all mb-4 text-center">
+
+            <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                class="text-xs text-yellow-500 hover:underline mb-6 block">كيف أحصل على مفتاح مجاني؟</a>
+
+            <button id="btn-save-key"
+                class="w-full bg-gradient-to-r from-yellow-500 to-orange-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-yellow-500/20 active:scale-95 transition-all">حفظ
+                ومتابعة</button>
+        </div>
+    </div>
+
     <!-- Exam Setup Modal -->
     <div id="exam-modal"
         class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
@@ -519,7 +548,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/app.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

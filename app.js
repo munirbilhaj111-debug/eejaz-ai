@@ -27,8 +27,8 @@ let currentFile = null;
 let lastAIData = null;
 let circumference = 2 * Math.PI * 40; // r=40
 
-// API Configuration - Key from User
-const GEMINI_API_KEY = "AIzaSyCRL7oROgcwgeEUpy6XEqzrsKqVA5sfz6o";
+// API Configuration - Key from Session (Security First)
+let GEMINI_API_KEY = sessionStorage.getItem('EEJAZ_API_KEY') || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 // Initialize
@@ -39,7 +39,14 @@ function init() {
     }
 
     setupEventListeners();
+    checkApiKey(); // Ensure key is present
     runIntroSequence();
+}
+
+function checkApiKey() {
+    if (!GEMINI_API_KEY) {
+        document.getElementById('setup-modal').classList.remove('hidden');
+    }
 }
 
 function runIntroSequence() {
@@ -92,6 +99,23 @@ function setupEventListeners() {
 
     if (btnBackUpload) btnBackUpload.addEventListener('click', () => switchStep('upload'));
     if (btnProcess) btnProcess.addEventListener('click', startProcessing);
+
+    // API Key Setup
+    const btnSaveKey = document.getElementById('btn-save-key');
+    const apiKeyInput = document.getElementById('api-key-input');
+    if (btnSaveKey && apiKeyInput) {
+        btnSaveKey.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                GEMINI_API_KEY = key;
+                sessionStorage.setItem('EEJAZ_API_KEY', key);
+                document.getElementById('setup-modal').classList.add('hidden');
+                console.log("API Key saved for current session.");
+            } else {
+                alert("يرجى إدخال مفتاح API صحيح");
+            }
+        });
+    }
 }
 
 function handleFileSelect(e) {
