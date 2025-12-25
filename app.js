@@ -27,8 +27,7 @@ let currentFile = null;
 let lastAIData = null;
 let circumference = 2 * Math.PI * 40; // r=40
 
-// API Configuration - Key from Session (Security First)
-let GEMINI_API_KEY = sessionStorage.getItem('EEJAZ_API_KEY') || "";
+let GEMINI_API_KEY = localStorage.getItem('EEJAZ_API_KEY_SECURE') || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 // Initialize
@@ -39,14 +38,12 @@ function init() {
     }
 
     setupEventListeners();
-    checkApiKey(); // Ensure key is present
+    if (!GEMINI_API_KEY) showSetupModal();
     runIntroSequence();
 }
 
-function checkApiKey() {
-    if (!GEMINI_API_KEY) {
-        document.getElementById('setup-modal').classList.remove('hidden');
-    }
+function showSetupModal() {
+    document.getElementById('setup-modal').classList.remove('hidden');
 }
 
 function runIntroSequence() {
@@ -106,13 +103,12 @@ function setupEventListeners() {
     if (btnSaveKey && apiKeyInput) {
         btnSaveKey.addEventListener('click', () => {
             const key = apiKeyInput.value.trim();
-            if (key) {
+            if (key && key.startsWith("AIza")) {
                 GEMINI_API_KEY = key;
-                sessionStorage.setItem('EEJAZ_API_KEY', key);
+                localStorage.setItem('EEJAZ_API_KEY_SECURE', key);
                 document.getElementById('setup-modal').classList.add('hidden');
-                console.log("API Key saved for current session.");
             } else {
-                alert("يرجى إدخال مفتاح API صحيح");
+                alert("يرجى إدخال مفتاح Gemini API صحيح (يبدأ بـ AIza)");
             }
         });
     }
@@ -149,7 +145,22 @@ async function startProcessing() {
     setProgress(10, "جاري قراءة الملف...");
 
     try {
-        const text = await extractTextFromFile(currentFile);
+        let text = await extractTextFromFile(currentFile);
+
+        // --- Smart OCR Check ---
+        if (!text || text.trim().length < 200 || text.includes("CamScanner")) {
+            setProgress(15, "ملف مصور! جاري بدء التعرف الضوئي (OCR)...");
+            text = await runOCRForPDF(currentFile);
+        }
+
+        if (!text || text.trim().length < 50) {
+            throw new Error("عذراً، محتوى هذا الملف غير قابل للقراءة. يرجى التأكد من جودة الملف.");
+        }
+
+        console.log("---- TEXT EXTRACTION START ----");
+        console.log(text.substring(0, 1000));
+        console.log("---- TEXT EXTRACTION END ----");
+
         setProgress(40, "تحليل النص بالذكاء الاصطناعي...");
 
         const lang = optLanguage.value;
@@ -159,7 +170,7 @@ async function startProcessing() {
         if (selectedTypes.length === 0) selectedTypes = ['mcq', 'tf', 'fill', 'reasoning'];
 
         setProgress(60, "توليد الأسئلة والملخص الشامل...");
-        const aiData = await callGeminiAPIWithRetry(text, lang, count, selectedTypes);
+        const aiData = await callGeminiAPIWithRetry(text, lang, count, selectedTypes, currentFile.name);
 
         setProgress(100, "تم الانتهاء!");
         setTimeout(() => showResults(aiData), 800);
@@ -199,16 +210,56 @@ async function extractPlainText(file) {
     });
 }
 
+async function runOCRForPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    let fullText = "";
+
+    // OCR is heavy, limit to first 10 pages for speed/reliability
+    const pagesToOCR = Math.min(pdf.numPages, 10);
+
+    try {
+        for (let i = 1; i <= pagesToOCR; i++) {
+            setProgress(15 + (i * 2), `جاري قراءة الصفحة ${i} عبر OCR...`);
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2.0 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            const { data: { text } } = await Tesseract.recognize(canvas, 'ara+eng');
+            fullText += text + "\n";
+        }
+    } catch (e) {
+        console.error("OCR Error:", e);
+        throw new Error("فشل نظام التعرف الضوئي (OCR). يرجى التأكد من أن الملف ليس محمياً بكلمة سر.");
+    }
+    return fullText;
+}
+
 async function extractPDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument(arrayBuffer);
     const pdf = await loadingTask.promise;
     let text = "";
-    const maxPages = Math.min(pdf.numPages, 15);
+    const maxPages = Math.min(pdf.numPages, 30); // Increased to 30 pages
     for (let i = 1; i <= maxPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        const strings = content.items.map(item => item.str);
+
+        // Improve RTL/Arabic extraction by sorting items by position
+        // transform[5] is Y coordinate, transform[4] is X coordinate
+        const items = content.items.sort((a, b) => {
+            if (Math.abs(a.transform[5] - b.transform[5]) > 5) {
+                return b.transform[5] - a.transform[5]; // Sort by Y (Top to Bottom)
+            }
+            return b.transform[4] - a.transform[4]; // Sort by X (Right to Left for Arabic)
+        });
+
+        const strings = items.map(item => item.str);
         text += strings.join(" ") + "\n";
     }
     return text;
@@ -216,30 +267,49 @@ async function extractPDF(file) {
 
 // --- Gemini API with Auto-Retry and Multiple Model Support ---
 
-async function callGeminiAPIWithRetry(text, lang, count, types, retries = 3) {
+async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retries = 3) {
     const langName = lang === 'ar' ? "Arabic" : "English";
     const prompt = `
-        You are an elite educational AI. 
-        Task: Provide a very structured, comprehensive summary AND a wide variety of exam questions in ${langName} based on the input text.
+        You are a strict educational assessment specialist.
         
-        Requirements:
-        1. Summary: Detailed, using Markdown formatting (bullet points, bolding).
-        2. Questions: Generate about ${count} questions. 
-        3. Types: Mix of mcq, tf, fill, reasoning.
-        4. Format: Strictly valid JSON.
+        ### ⚠️ STRICT CONTEXT LOCK (ZERO-KNOWLEDGE MODE):
+        - You are now in a "ZERO-KNOWLEDGE" state. 
+        - You KNOW NOTHING about biology, history, religion, or any topic EXCEPT what is written in the "INPUT TEXT" below.
+        - If the information is not in the "INPUT TEXT", you must act as if it doesn't exist.
+        - NEVER use your pre-trained memory to fill in gaps.
+        - For EVERY question, you MUST include the exact sentence from the "INPUT TEXT" in the "source_quote" field.
+        - If you cannot find enough information to make ${count} questions, make ONLY what you can find.
+        - IF THE TEXT IS NOT EDUCATIONAL OR MEANINGFUL, DO NOT MAKE QUESTIONS.
 
-        Text Context: "${text.substring(0, 35000)}"
+        ### CONTEXT:
+        - Language: ${langName}
+        - Required Questions: Approximately ${count}
+        - Allowable Question Types: ${types.join(", ")}
 
-        JSON Schema:
+        ### TASK:
+        1. **Educational Summary**: A deep, structured summary using Markdown (bold, headers, lists).
+        2. **Question Generation**: 
+           - For 'mcq': Multiple choice with logical distractors.
+           - For 'tf': True or False based on specific details.
+           - For 'fill': Target key phrases or definitions.
+           - For 'reasoning': Ask "Why" or "How" based on the analytical parts of the text.
+
+        ### INPUT TEXT:
+        "${text.substring(0, 35000)}"
+
+        ### JSON OUTPUT SCHEMA:
+        - Output MUST be valid JSON only.
+        - NO markdown code blocks, NO extra text.
         {
-            "summary": "Full summary text...",
+            "summary": "Educational summary...",
             "questions": [
                 {
                     "type": "mcq" | "tf" | "fill" | "reasoning",
-                    "text": "Question text...",
-                    "options": ["A", "B", "C", "D"] (mcq only),
-                    "correctAnswer": "The answer",
-                    "explanation": "Reasoning"
+                    "text": "The question content...",
+                    "options": ["Opt 1", "Opt 2", "Opt 3", "Opt 4"],
+                    "correctAnswer": "Answer",
+                    "source_quote": "Text snippet",
+                    "explanation": "Why correct"
                 }
             ]
         }
@@ -247,13 +317,7 @@ async function callGeminiAPIWithRetry(text, lang, count, types, retries = 3) {
 
     const body = { contents: [{ parts: [{ text: prompt }] }] };
 
-    // Models supported by the provided API key (Confirmed via ListModels)
-    const models = [
-        'gemini-flash-latest', // Stable alias for 1.5 Flash
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite'
-    ];
-
+    const models = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
     let lastError = null;
 
     for (let i = 0; i < retries; i++) {
@@ -266,32 +330,44 @@ async function callGeminiAPIWithRetry(text, lang, count, types, retries = 3) {
                     body: JSON.stringify(body)
                 });
 
+                if (response.status === 403 || response.status === 401) {
+                    localStorage.removeItem('EEJAZ_API_KEY_SECURE');
+                    showSetupModal();
+                    throw new Error("توقف المفتاح أو انتهت صلاحيته. يرجى التحديث.");
+                }
+
                 if (response.status === 429) {
-                    const sleepTime = (i + 1) * 7000;
-                    setProgress(60, `زحام في الطلبات... محاولة ${i + 1} من ${retries}`);
-                    await new Promise(r => setTimeout(r, sleepTime));
-                    break; // Retry the loop for quota
+                    const waitTime = (i + 1) * 10000; // Increased wait for 429
+                    setProgress(60, `ضغط طلبات... انتظر ${waitTime / 1000} ثانية...`);
+                    await new Promise(r => setTimeout(r, waitTime));
+                    continue;
                 }
 
                 if (!response.ok) {
-                    const errText = await response.text();
-                    lastError = new Error(`Error ${response.status}: ${errText}`);
-                    continue; // Try next model
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "فشل الطلب.");
                 }
 
                 const data = await response.json();
-                const rawResult = data.candidates[0].content.parts[0].text;
-                const jsonString = rawResult.replace(/```json/g, '').replace(/```/g, '').trim();
-                return JSON.parse(jsonString);
+                const raw = data.candidates[0].content.parts[0].text;
+
+                // --- Robust JSON Cleaning ---
+                const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("لم يتم استلام بيانات صحيحة.");
+
+                let cleaned = jsonMatch[0]
+                    .replace(/,\s*([\}\]])/g, '$1') // Remove trailing commas
+                    .replace(/\/\/.*/g, '');      // Remove JS comments if any
+
+                return JSON.parse(cleaned);
 
             } catch (error) {
                 lastError = error;
-                console.error(`Model ${model} failed:`, error);
+                console.error(`Model ${model} error:`, error);
             }
         }
-        if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
     }
-    throw lastError || new Error("All models failed.");
+    throw lastError || new Error("فشلت جميع المحاولات.");
 }
 
 // --- Results Rendering ---
@@ -341,9 +417,10 @@ function showResults(data) {
         } else {
             html += `
                 <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-sm text-purple-400 underline py-2 font-medium">🔍 إظهار الإجابة النموذجية</button>
-                <div class="hidden mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl text-green-300">
-                    <strong>الإجابة:</strong> ${q.correctAnswer}
-                    ${q.explanation ? `<p class="text-gray-400 text-sm mt-2 font-light">${q.explanation}</p>` : ''}
+                <div class="hidden mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
+                    <div class="text-green-300 mb-2"><strong>الإجابة:</strong> ${q.correctAnswer}</div>
+                    ${q.source_quote ? `<div class="text-yellow-200/70 text-xs mb-2 italic border-r-2 border-yellow-500/30 pr-2">"المصدر من النص: ${q.source_quote}"</div>` : ''}
+                    ${q.explanation ? `<p class="text-gray-400 text-sm font-light">${q.explanation}</p>` : ''}
                 </div>
             `;
         }

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" style="overflow-x: hidden;">
 
 <head>
     <meta charset="UTF-8">
@@ -16,13 +15,28 @@
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        // Set worker path for pdf.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Mute Tailwind & CDN logs
+        (function () {
+            const originalLog = console.log;
+            const originalWarn = console.warn;
+            console.log = function () {
+                if (arguments[0] && typeof arguments[0] === 'string' && (arguments[0].includes('tailwindcss') || arguments[0].includes('cdn.tailwindcss.com'))) return;
+                originalLog.apply(console, arguments);
+            };
+            console.warn = function () {
+                if (arguments[0] && typeof arguments[0] === 'string' && (arguments[0].includes('tailwindcss') || arguments[0].includes('cdn.tailwindcss.com'))) return;
+                originalWarn.apply(console, arguments);
+            };
+        })();
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -466,40 +480,43 @@
         </div>
     </main>
 
-    <!-- API Key Setup Modal -->
+    <!-- API Key Setup Modal (Persistent Secure Storage) -->
     <div id="setup-modal"
-        class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-gray-900/95 backdrop-blur-xl">
+        class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-gray-900/95 backdrop-blur-2xl">
         <div
-            class="glass-card max-w-md w-full p-8 rounded-3xl border border-white/10 shadow-2xl text-center animate-fade-in-up">
-            <div
-                class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+            class="glass-card max-w-md w-full p-8 rounded-3xl border border-white/10 shadow-2xl text-center animate-fade-in-up mx-auto">
+            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <h2 class="text-2xl font-bold text-white mb-4">إعداد مفتاح الذكاء الاصطناعي</h2>
-            <p class="text-gray-400 mb-8 text-sm">للبدء، يرجى إدخال مفتاح Gemini API الخاص بك. يتم حفظ المفتاح بشكل آمن
-                في متصفحك فقط.</p>
+            <h2 class="text-2xl font-bold text-white mb-2 font-logo">تنشيط مفتاح الذكاء الاصطناعي</h2>
+            <p class="text-gray-400 mb-6 text-sm leading-relaxed">عذراً، تم تعطيل المفتاح السابق لأنه نُشر بشكل علني.
+                يرجى إدخال مفتاح جديد خاص بك.
+                <br><span class="text-yellow-500/80 mt-2 block">سيتم حفظه في متصفحك فقط ولن يُنشر أبداً.</span>
+            </p>
 
-            <input type="password" id="api-key-input" placeholder="أدخل مفتاح API هنا..."
+            <input type="password" id="api-key-input" placeholder="أدخل مفتاح Gemini هنا..."
                 class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-yellow-500 outline-none transition-all mb-4 text-center">
 
             <a href="https://aistudio.google.com/app/apikey" target="_blank"
-                class="text-xs text-yellow-500 hover:underline mb-6 block">كيف أحصل على مفتاح مجاني؟</a>
+                class="text-xs text-purple-400 hover:underline mb-6 block">الحصول على مفتاح مجاني جديد (اضغط هنا)</a>
 
             <button id="btn-save-key"
-                class="w-full bg-gradient-to-r from-yellow-500 to-orange-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-yellow-500/20 active:scale-95 transition-all">حفظ
-                ومتابعة</button>
+                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-purple-500/20 active:scale-95 transition-all">تفعيل
+                البرنامج الآن</button>
         </div>
     </div>
 
     <!-- Exam Setup Modal -->
     <div id="exam-modal"
         class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
-        <div class="glass-card max-w-lg w-full p-8 rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up">
-            <h2 class="text-2xl font-bold mb-6 text-white border-b border-purple-500/30 pb-4">إعدادات الامتحان الرسمي
+        <div
+            class="glass-card max-w-lg w-full p-8 rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-white border-b border-purple-500/30 pb-4">إعدادات الامتحان
+                الرسمي
             </h2>
 
             <div class="space-y-4">
