@@ -1,0 +1,152 @@
+/* Glassmorphism Utilities */
+.glass-container {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Custom Animation Delays for Blobs */
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+
+/* Stripes Pattern for Ad Placeholder */
+.bg-stripes {
+    background-image: linear-gradient(45deg,
+            #ffffff 12.5%,
+            transparent 12.5%,
+            transparent 50%,
+            #ffffff 50%,
+            #ffffff 62.5%,
+            transparent 62.5%,
+            transparent 100%);
+    background-size: 20px 20px;
+}
+
+/* Smooth Fade In Up Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Custom Drag Over State */
+.drag-over {
+    border-color: #A78BFA !important;
+    /* purple-400 */
+    background-color: rgba(139, 92, 246, 0.1) !important;
+    /* purple-500/10 */
+    transform: scale(1.02);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4B5563;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6B7280;
+}
+
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Intro Screens */
+.intro-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, 0.95);
+    /* Dark bg */
+    backdrop-filter: blur(20px);
+    transition: transform 0.8s cubic-bezier(0.86, 0, 0.07, 1), opacity 0.5s ease;
+}
+
+.intro-content {
+    text-align: center;
+    max-width: 600px;
+    padding: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease-out 0.3s forwards;
+}
+
+/* Slide Up Exit Animation */
+.slide-up-exit {
+    transform: translateY(-100%);
+    pointer-events: none;
+}
+
+/* Hidden Utility */
+.d-none {
+    display: none !important;
+}
+
+/* Loader Animation */
+.loader-pulse {
+    animation: loaderPulse 2s infinite;
+}
+
+@keyframes loaderPulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.5;
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 0 20px rgba(139, 92, 246, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.5;
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+}

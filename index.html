@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إيجاز | Eejaz AI</title>
+
+    <!-- Google Fonts: Outfit for English, Cairo for Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Reem+Kufi:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Set worker path for pdf.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        glass: "rgba(255, 255, 255, 0.05)",
+                        glassBorder: "rgba(255, 255, 255, 0.1)",
+                        primary: "#8B5CF6", // Purple-500
+                        secondary: "#EC4899", // Pink-500
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                        english: ['Outfit', 'sans-serif'],
+                        logo: ['Reem Kufi', 'serif'],
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        #print-area {
+            display: none;
+        }
+
+        /* Print Styles for Text-Based PDF */
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            body>* {
+                display: none !important;
+            }
+
+            #print-area {
+                display: block !important;
+                position: relative;
+                width: 100%;
+                color: black !important;
+                background: white !important;
+                padding: 20mm 15mm;
+                margin: 0;
+                direction: rtl;
+                font-family: 'Cairo', sans-serif;
+            }
+
+            .text-gray-400 {
+                color: #333 !important;
+            }
+
+            .bg-gray-800,
+            .bg-gray-900 {
+                background: transparent !important;
+            }
+
+            button {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-900 text-white min-h-screen overflow-x-hidden relative selection:bg-pink-500 selection:text-white font-sans">
+
+    <!-- Background Animation Blobs -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div
+            class="absolute top-0 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+        </div>
+        <div
+            class="absolute top-0 right-1/4 w-96 h-96 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
+        </div>
+        <div
+            class="absolute -bottom-32 left-1/3 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000">
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="relative z-10 min-h-screen flex items-center justify-center p-4">
+
+        <!-- INTRO SCREEN 1: Loading -->
+        <div id="intro-loading" class="intro-screen z-[60]">
+            <div class="relative w-32 h-32 flex items-center justify-center">
+                <div class="absolute inset-0 bg-purple-600 rounded-full loader-pulse"></div>
+                <div class="absolute inset-2 bg-gray-900 rounded-full flex items-center justify-center z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white animate-bounce" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-white mt-8 text-2xl font-bold tracking-widest animate-pulse">جاري التحميل...</h2>
+        </div>
+
+        <!-- INTRO SCREEN 2: Welcome (Click to Start) -->
+        <div id="intro-welcome" class="intro-screen z-[50] hidden cursor-pointer">
+            <div class="intro-content">
+                <div class="mb-2">
+                    <span
+                        class="font-logo text-6xl md:text-8xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-500 font-bold block mb-2">إيجاز</span>
+                    <span
+                        class="font-english text-3xl md:text-4xl text-white/40 tracking-[0.3em] font-light block mb-8 uppercase">Eejaz</span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight">
+                    ذكاءٌ يُلخص.. وإبداعٌ ينجز
+                </h1>
+                <p class="text-gray-400 text-xl mb-12">اضغط في أي مكان لبدء التجربة</p>
+                <div
+                    class="w-16 h-16 border-2 border-white/20 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                </div>
+            </div>
+            <!-- Full screen click trigger -->
+            <div class="absolute inset-0 z-10" onclick="nextIntroStep('intro-how-it-works')"></div>
+        </div>
+
+        <!-- INTRO SCREEN 3: How It Works -->
+        <div id="intro-how-it-works" class="intro-screen z-[40] hidden">
+            <div class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-purple-900/50">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3 hover:rotate-6 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">طريقة العمل</h2>
+                <p class="text-gray-300 text-lg mb-8 leading-relaxed">
+                    نقوم بتحليل ملفاتك باستخدام أحدث تقنيات الذكاء الاصطناعي لاستخراج الملخصات والأسئلة المهمة في ثوانٍ
+                    معدودة.
+                </p>
+                <button onclick="nextIntroStep('intro-privacy')"
+                    class="bg-white text-gray-900 px-10 py-3 rounded-full font-bold text-lg hover:bg-gray-200 transition-colors shadow-lg hover:shadow-white/20 transform hover:-translate-y-1">
+                    فهمت
+                </button>
+            </div>
+        </div>
+
+        <!-- INTRO SCREEN 4: Privacy Data -->
+        <div id="intro-privacy" class="intro-screen z-[30] hidden">
+            <div class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-pink-900/50">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg -rotate-3 hover:-rotate-6 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">بيانات الخصوصية</h2>
+                <p class="text-gray-300 text-lg mb-8 leading-relaxed">
+                    نحن نلتزم بحماية بياناتك. يتم معالجة الملفات بشكل آمن ولا يتم مشاركتها مع أي طرف ثالث دون إذنك.
+                </p>
+                <button onclick="nextIntroStep('intro-policy')"
+                    class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-10 py-3 rounded-full font-bold text-lg hover:from-pink-600 hover:to-red-600 transition-all shadow-lg shadow-pink-500/30 transform hover:-translate-y-1">
+                    موافق
+                </button>
+            </div>
+        </div>
+
+        <!-- INTRO SCREEN 5: Policy -->
+        <div id="intro-policy" class="intro-screen z-[20] hidden">
+            <div class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-purple-900/50">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3 hover:rotate-0 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">سياسة التطبيق</h2>
+                <p class="text-gray-300 text-lg mb-8 leading-relaxed">
+                    باستخدامك لهذا التطبيق، فإنك توافق على شروط الاستخدام وسياسة الاستخدام العادل للموارد.
+                </p>
+                <button onclick="finishIntro()"
+                    class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-10 py-3 rounded-full font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/30 transform hover:-translate-y-1 flex items-center gap-2 mx-auto">
+                    <span>موافق لنبدأ العمل</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main App (Hidden Initially) -->
+        <div class="glass-container w-full max-w-4xl p-8 md:p-12 relative overflow-hidden transition-all duration-1000 ease-in-out opacity-0 transform translate-y-20 scale-95"
+            id="main-card">
+
+            <!-- Header -->
+            <header class="text-center mb-10">
+                <div class="flex flex-col items-center justify-center gap-1 mb-2">
+                    <h1
+                        class="font-logo text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
+                        إيجاز</h1>
+                    <span class="font-english text-xs text-white/30 tracking-[0.5em] uppercase">Eejaz AI</span>
+                </div>
+                <p class="text-gray-400 text-lg">حول ملفاتك إلى ملخصات وأسئلة ذكية في ثوانٍ</p>
+            </header>
+
+            <!-- Step 1: Upload Zone -->
+            <section id="step-upload" class="transition-opacity duration-500">
+                <div id="drop-zone"
+                    class="border-2 border-dashed border-gray-600 rounded-3xl p-10 text-center cursor-pointer transition-all duration-300 hover:border-purple-500 hover:bg-white/5 group relative">
+                    <input type="file" id="file-input" class="hidden" accept=".pdf,.docx,.txt">
+
+                    <div class="pointer-events-none">
+                        <div
+                            class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-purple-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-200">اسحب الملف هنا أو اضغط للرفع</h3>
+                        <p class="text-sm text-gray-500">يدعم PDF, DOCX, TXT</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Options Panel (Hidden initially) -->
+            <section id="step-options" class="hidden transition-all duration-500">
+                <div class="bg-gray-800/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="w-2 h-8 bg-pink-500 rounded-full"></span>
+                            إعدادات التحليل
+                        </h2>
+                        <button id="btn-back-upload"
+                            class="text-sm text-gray-400 hover:text-white transition-colors">تغيير الملف</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Language -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">لغة التلخيص</label>
+                            <select id="opt-language"
+                                class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all">
+                                <option value="ar">العربية</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <!-- Question Type (New Checkboxes) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">أنواع الأسئلة (توزيع
+                                ذكي)</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label
+                                    class="flex items-center gap-2 bg-gray-900 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition-colors border border-gray-700">
+                                    <input type="checkbox" name="qType" value="mcq" checked
+                                        class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm">خيارات (MCQ)</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-2 bg-gray-900 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition-colors border border-gray-700">
+                                    <input type="checkbox" name="qType" value="tf" checked
+                                        class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm">صح/خطأ</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-2 bg-gray-900 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition-colors border border-gray-700">
+                                    <input type="checkbox" name="qType" value="fill"
+                                        class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm">أكمل الفراغ</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-2 bg-gray-900 rounded-lg p-3 cursor-pointer hover:bg-gray-800 transition-colors border border-gray-700">
+                                    <input type="checkbox" name="qType" value="reasoning"
+                                        class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500">
+                                    <span class="text-sm">علل/لماذا</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Question Count -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-400 mb-2">عدد الأسئلة: <span
+                                    id="q-count-display" class="text-purple-400 font-bold">10</span></label>
+                            <input type="range" id="opt-count" min="1" max="20" value="10"
+                                class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button id="btn-process"
+                            class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-500/30 transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                            <span>بدء المعالجة</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: Progress (Hidden initially) -->
+            <section id="step-processing" class="hidden py-10 text-center">
+                <div class="relative w-40 h-40 mx-auto mb-8">
+                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                        <circle class="text-gray-700 stroke-current" stroke-width="8" cx="50" cy="50" r="40"
+                            fill="transparent"></circle>
+                        <circle id="progress-ring"
+                            class="text-pink-500 progress-ring__circle stroke-current transform -rotate-90 origin-center transition-all duration-300"
+                            stroke-width="8" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent"
+                            stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                    </svg>
+                    <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                        <span id="progress-text" class="text-2xl font-bold text-white">0%</span>
+                    </div>
+                </div>
+                <h3 id="progress-status" class="text-xl text-gray-300 animate-pulse">جاري تحليل الملف...</h3>
+            </section>
+
+            <!-- Step 4: Results (Hidden initially) -->
+            <section id="step-results" class="hidden space-y-8 animate-fade-in-up">
+
+                <!-- Summary Card -->
+                <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
+                    <h3 class="text-2xl font-bold text-white mb-4">الملخص</h3>
+                    <p id="result-summary" class="text-gray-300 leading-relaxed text-lg">
+                        <!-- Summary content will be injected here -->
+                    </p>
+                    <div
+                        class="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all">
+                    </div>
+                </div>
+
+                <!-- Ad Placeholder 1 -->
+                <div
+                    class="w-full aspect-[21/9] md:aspect-[32/5] bg-gray-800/80 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-gray-500 overflow-hidden relative">
+                    <span class="text-xs uppercase tracking-widest mb-1">Advertisement</span>
+                    <!-- Google Ad Placeholder -->
+                    <div class="w-full h-full bg-stripes opacity-10 absolute inset-0"></div>
+                    <p class="font-bold">مساحة إعلانية مميزة</p>
+                </div>
+
+                <!-- Questions Section -->
+                <div id="questions-container" class="space-y-4">
+                    <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        الأسئلة المقترحة
+                    </h3>
+                    <!-- Questions will be injected here -->
+                </div>
+
+                <!-- PDF Options -->
+                <div class="flex items-center justify-center gap-6 py-4 border-t border-white/5 no-print">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" id="chk-include-summary" checked class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600">
+                            </div>
+                        </div>
+                        <span
+                            class="text-sm font-medium text-gray-300 group-hover:text-purple-400 transition-colors">تنزيل
+                            مع الملخص</span>
+                    </label>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4 justify-center pt-4">
+                    <button id="btn-download-no-answers" type="button"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>تنزيل (بدون إجابات)</span>
+                    </button>
+
+                    <button id="btn-download-with-answers" type="button"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-lg transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>تنزيل (مع الإجابات)</span>
+                    </button>
+
+                    <button id="btn-print-exam" type="button"
+                        class="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-gray-900 px-6 py-3 rounded-xl shadow-lg shadow-yellow-500/20 transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 font-bold ring-2 ring-yellow-400/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        <span>طباعة امتحان رسمي</span>
+                    </button>
+                </div>
+
+                <!-- Ad Placeholder 2 -->
+                <div
+                    class="w-full h-24 bg-gray-800/80 rounded-xl border border-gray-700 flex flex-col items-center justify-center text-gray-500 mt-8">
+                    <span class="text-xs uppercase tracking-widest">Advertisement</span>
+                    <p>إعلان سفلي</p>
+                </div>
+
+                <div class="text-center pt-8">
+                    <button onclick="location.reload()"
+                        class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-full transition-all">
+                        بدء جديد
+                    </button>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Exam Setup Modal -->
+    <div id="exam-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
+        <div class="glass-card max-w-lg w-full p-8 rounded-3xl border border-white/10 shadow-2xl animate-fade-in-up">
+            <h2 class="text-2xl font-bold mb-6 text-white border-b border-purple-500/30 pb-4">إعدادات الامتحان الرسمي
+            </h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">شعار المؤسسة</label>
+                    <input type="file" id="exam-logo" accept="image/*"
+                        class="w-full bg-gray-800 rounded-xl px-4 py-2 border border-gray-700 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">اسم المادة / عنوان الامتحان</label>
+                    <input type="text" id="exam-subject-name" placeholder="مثال: اللغة العربية / رياضيات"
+                        class="w-full bg-gray-800 rounded-xl px-4 py-3 border border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 mb-4">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">اسم المؤسسة (المدرسة/الأكاديمية)</label>
+                    <input type="text" id="exam-inst-name" placeholder="أدخل اسم المؤسسة"
+                        class="w-full bg-gray-800 rounded-xl px-4 py-3 border border-gray-700 outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">اسم الأستاذ / المعلم</label>
+                        <input type="text" id="exam-teacher-name" placeholder="أدخل اسم الأستاذ"
+                            class="w-full bg-gray-800 rounded-xl px-4 py-3 border border-gray-700 outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">درجة الامتحان الكلية</label>
+                        <input type="number" id="exam-total-mark" placeholder="مثال: 60"
+                            class="w-full bg-gray-800 rounded-xl px-4 py-3 border border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 text-center font-bold text-yellow-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">ملاحظة أسفل الورقة</label>
+                    <textarea id="exam-note" rows="2" placeholder='مثال: "عند اختيار اجابتين يصبح السوال مشطوه"'
+                        class="w-full bg-gray-800 rounded-xl px-4 py-3 border border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 text-sm"></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button id="btn-confirm-exam"
+                    class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-3 rounded-xl font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all">توليد
+                    الامتحان</button>
+                <button id="btn-close-exam"
+                    class="px-6 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-colors">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
