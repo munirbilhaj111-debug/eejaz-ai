@@ -30,6 +30,15 @@ let circumference = 2 * Math.PI * 40; // r=40
 let GEMINI_API_KEY = localStorage.getItem('EEJAZ_API_KEY_SECURE') || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
+// PWA Installation
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('btn-install-app');
+    if (installBtn) installBtn.classList.remove('hidden');
+});
+
 // Initialize
 function init() {
     if (progressRing) {
@@ -37,24 +46,53 @@ function init() {
         progressRing.style.strokeDashoffset = circumference;
     }
 
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Registered', reg))
+            .catch(err => console.log('Service Worker Failed', err));
+    }
+
     setupEventListeners();
-    if (!GEMINI_API_KEY) showSetupModal();
     runIntroSequence();
 }
 
 function showSetupModal() {
-    document.getElementById('setup-modal').classList.remove('hidden');
+    window.nextIntroStep('intro-api');
 }
 
 function runIntroSequence() {
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('intro-loading');
-        if (loadingScreen) {
-            loadingScreen.classList.add('slide-up-exit');
-            const welcomeScreen = document.getElementById('intro-welcome');
-            if (welcomeScreen) welcomeScreen.classList.remove('hidden');
+    const ring = document.getElementById('intro-ring-fill');
+    const percentVal = document.getElementById('intro-percent-val');
+    if (!ring || !percentVal) return;
+
+    const circumference = 628.3; // 2 * PI * 100
+    let progress = 0;
+    const duration = 5000; // 5 seconds
+    const interval = 50; // update every 50ms
+    const step = 100 / (duration / interval);
+
+    const timer = setInterval(() => {
+        progress += step;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(timer);
+
+            // Finish and slide up
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('intro-loading');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('slide-up-exit');
+                    const welcomeScreen = document.getElementById('intro-welcome');
+                    if (welcomeScreen) welcomeScreen.classList.remove('hidden');
+                }
+            }, 500);
         }
-    }, 2500);
+
+        percentVal.textContent = Math.floor(progress);
+        const offset = circumference - (progress / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+    }, interval);
 }
 
 window.nextIntroStep = function (nextId) {
@@ -66,9 +104,13 @@ window.nextIntroStep = function (nextId) {
 }
 
 window.finishIntro = function () {
-    window.nextIntroStep('none');
-    const mainCard = document.getElementById('main-card');
-    if (mainCard) mainCard.classList.remove('opacity-0', 'translate-y-20', 'scale-95');
+    if (!GEMINI_API_KEY) {
+        window.nextIntroStep('intro-api');
+    } else {
+        window.nextIntroStep('none');
+        const mainCard = document.getElementById('main-card');
+        if (mainCard) mainCard.classList.remove('opacity-0', 'translate-y-20', 'scale-95');
+    }
 }
 
 function setupEventListeners() {
@@ -97,7 +139,7 @@ function setupEventListeners() {
     if (btnBackUpload) btnBackUpload.addEventListener('click', () => switchStep('upload'));
     if (btnProcess) btnProcess.addEventListener('click', startProcessing);
 
-    // API Key Setup
+    // AI Key Setup
     const btnSaveKey = document.getElementById('btn-save-key');
     const apiKeyInput = document.getElementById('api-key-input');
     if (btnSaveKey && apiKeyInput) {
@@ -105,10 +147,40 @@ function setupEventListeners() {
             const key = apiKeyInput.value.trim();
             if (key && key.startsWith("AIza")) {
                 GEMINI_API_KEY = key;
-                localStorage.setItem('EEJAZ_API_KEY_SECURE', key);
-                document.getElementById('setup-modal').classList.add('hidden');
+                localStorage.setItem('EEJAZ_API_KEY_SECURE', key); // Standardized key name
+
+                // Transition to main screen
+                const apiScreen = document.getElementById('intro-api');
+                if (apiScreen) apiScreen.classList.add('slide-up-exit');
+
+                const mainCard = document.getElementById('main-card');
+                if (mainCard) mainCard.classList.remove('opacity-0', 'translate-y-20', 'scale-95');
             } else {
                 alert("يرجى إدخال مفتاح Gemini API صحيح (يبدأ بـ AIza)");
+            }
+        });
+    }
+
+    // PWA Install Button
+    const btnInstall = document.getElementById('btn-install-app');
+    if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    btnInstall.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            } else {
+                // Fallback for manual installation (Desktop/Mobile)
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    alert("لتثبيت التطبيق:\n1. اضغط على خيارات المتصفح (⋮ أو ⬆️).\n2. اختر 'إضافة إلى الشاشة الرئيسية' (Add to Home Screen).");
+                } else {
+                    alert("لتثبيت التطبيق على الكمبيوتر:\n1. انظر إلى شريط العنوان في الأعلى.\n2. اضغط على أيقونة التحميل (⬇️) أو خيارات المتصفح.\n3. اختر 'Install Eejaz'.");
+                }
             }
         });
     }
@@ -266,9 +338,19 @@ async function extractPDF(file) {
 }
 
 // --- Gemini API with Auto-Retry and Multiple Model Support ---
-
 async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retries = 3) {
     const langName = lang === 'ar' ? "Arabic" : "English";
+
+    // --- Strict Question Distribution Logic ---
+    const typesArray = Array.isArray(types) ? types : [types];
+    const baseCount = Math.floor(count / typesArray.length);
+    let remainder = count % typesArray.length;
+    const distributionInfo = typesArray.map(t => {
+        const typeCount = baseCount + (remainder > 0 ? 1 : 0);
+        remainder--;
+        return `${typeCount} (${t})`;
+    }).join(", ");
+
     const prompt = `
         You are a strict educational assessment specialist.
         
@@ -283,8 +365,8 @@ async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retrie
 
         ### CONTEXT:
         - Language: ${langName}
-        - Required Questions: Approximately ${count}
-        - Allowable Question Types: ${types.join(", ")}
+        - Total Required Questions: ${count}
+        - STRICT DISTRIBUTION: You MUST generate exactly: ${distributionInfo}
 
         ### TASK:
         1. **Educational Summary**: A deep, structured summary using Markdown (bold, headers, lists).

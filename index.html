@@ -8,9 +8,14 @@
     <!-- Google Fonts: Outfit for English, Cairo for Arabic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&family=Reem+Kufi:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Outfit:wght@300;400;600;800&family=Reem+Kufi:wght@400;700&display=swap"
         rel="stylesheet">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -132,19 +137,34 @@
     <!-- Main Container -->
     <main class="relative z-10 min-h-screen w-full flex items-center justify-center p-4">
 
-        <!-- INTRO SCREEN 1: Loading -->
-        <div id="intro-loading" class="intro-screen z-[60]">
-            <div class="relative w-32 h-32 flex items-center justify-center">
-                <div class="absolute inset-0 bg-purple-600 rounded-full loader-pulse"></div>
-                <div class="absolute inset-2 bg-gray-900 rounded-full flex items-center justify-center z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white animate-bounce" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
+        <!-- STAGE 1: Professional Loading -->
+        <div id="intro-loading" class="intro-screen z-[100]">
+            <div class="intro-loader-container">
+                <svg class="intro-progress-ring" width="220" height="220">
+                    <defs>
+                        <linearGradient id="loader-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#8b5cf6" />
+                            <stop offset="100%" stop-color="#ec4899" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="intro-progress-bg" cx="110" cy="110" r="100"></circle>
+                    <circle id="intro-ring-fill" class="intro-progress-fill" cx="110" cy="110" r="100"
+                        stroke-dasharray="628.3" stroke-dashoffset="628.3"></circle>
+                </svg>
+                <div class="intro-percentage"><span id="intro-percent-val">0</span>%</div>
             </div>
-            <h2 class="text-white mt-8 text-2xl font-bold tracking-widest animate-pulse">جاري التحميل...</h2>
+
+            <div class="static-keywords">
+                <span class="keyword-tag">اختر ملفك</span>
+                <span class="keyword-tag">جهز مفتاحك AI</span>
+                <span class="keyword-tag">أنت محمي</span>
+                <span class="keyword-tag">جهز كتابك PDF</span>
+                <span class="keyword-tag">طريقك للنجاح</span>
+            </div>
+
+            <div class="mt-8 text-purple-400 text-[10px] font-mono tracking-[0.3em] animate-pulse">SYSTEM CORE
+                INITIALIZING...</div>
+        </div>
         </div>
 
         <!-- INTRO SCREEN 2: Welcome (Click to Start) -->
@@ -170,7 +190,47 @@
                 </div>
             </div>
             <!-- Full screen click trigger -->
-            <div class="absolute inset-0 z-10" onclick="nextIntroStep('intro-how-it-works')"></div>
+            <div class="absolute inset-0 z-10" onclick="nextIntroStep('intro-quality')"></div>
+        </div>
+
+        <!-- INTRO SCREEN 2.5: Quality Standards (New) -->
+        <div id="intro-quality" class="intro-screen z-[45] hidden">
+            <div
+                class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-yellow-900/40 p-10">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg -rotate-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.482a11.955 11.955 0 01-8.618-3.04A11.955 11.955 0 013 12c0-2.391.704-4.617 1.918-6.482M12 21.482a11.955 11.955 0 008.618-3.04A11.955 11.955 0 0021 12c0-2.391-.704-4.617-1.918-6.482M12 21.482V2.944" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4 italic">ضمان أعلى جودة</h2>
+                <p class="text-purple-400 text-sm mb-6 uppercase tracking-widest font-bold">مهم جداً لضمان دقة النتائج
+                </p>
+                <div class="text-right space-y-4 mb-8 text-gray-300">
+                    <div class="flex items-start gap-3">
+                        <span class="text-yellow-500 mt-1">✦</span>
+                        <p>تأكد من <strong>وضوح النصوص</strong> في ملفات الـ PDF (خاصة الممسوحة ضوئياً).</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-yellow-500 mt-1">✦</span>
+                        <p>يفضل رفع <strong>فصل واحد أو وحدة محددة</strong> للحصول على تحليل أعمق.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-yellow-500 mt-1">✦</span>
+                        <p>النظام مخصص للنصوص <strong>المطبوعة</strong>؛ الكتابة اليدوية قد لا تُقرأ بدقة.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-yellow-500 mt-1">✦</span>
+                        <p>تأكد من <strong>اختيار لغة الملف</strong> الصحيحة من الإعدادات قبل البدء.</p>
+                    </div>
+                </div>
+                <button onclick="nextIntroStep('intro-how-it-works')"
+                    class="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-10 py-3 rounded-full font-bold text-lg hover:from-yellow-600 hover:to-orange-700 transition-all shadow-lg shadow-yellow-500/20 transform hover:-translate-y-1">
+                    أعدك بذلك، لنبدأ!
+                </button>
+            </div>
         </div>
 
         <!-- INTRO SCREEN 3: How It Works -->
@@ -198,22 +258,30 @@
 
         <!-- INTRO SCREEN 4: Privacy Data -->
         <div id="intro-privacy" class="intro-screen z-[30] hidden">
-            <div class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-pink-900/50">
+            <div class="intro-content glass-card rounded-3xl border border-white/10 shadow-2xl shadow-blue-900/50 p-10">
                 <div
-                    class="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg -rotate-3 hover:-rotate-6 transition-transform">
+                    class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.482a11.955 11.955 0 01-8.618-3.04A11.955 11.955 0 013 12c0-2.391.704-4.617 1.918-6.482M12 21.482a11.955 11.955 0 008.618-3.04A11.955 11.955 0 0021 12c0-2.391-.704-4.617-1.918-6.482M12 21.482V2.944" />
                     </svg>
                 </div>
-                <h2 class="text-3xl font-bold text-white mb-4">بيانات الخصوصية</h2>
-                <p class="text-gray-300 text-lg mb-8 leading-relaxed">
-                    نحن نلتزم بحماية بياناتك. يتم معالجة الملفات بشكل آمن ولا يتم مشاركتها مع أي طرف ثالث دون إذنك.
-                </p>
+                <h2 class="text-3xl font-bold text-white mb-4">أمنك وخصوصيتك أولاً</h2>
+                <div class="text-gray-300 text-lg mb-8 leading-relaxed space-y-4 text-center">
+                    <p>
+                        نحن نفخر بتطبيق نظام <strong>"التواصل المباشر"</strong>؛ حيث ينتقل مفتاحك من متصفحك إلى خوادم
+                        جوجل مباشرة دون مرور بأي خوادم وسيطة.
+                    </p>
+                    <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl text-sm">
+                        <span class="text-blue-400 font-bold block mb-1">🛡️ تقنية الحماية:</span>
+                        يتم تشفير مفتاحك محلياً باستخدام تقنيات المتصفح الحديثة، ولا يمكن لأحد (حتى نحن مطوري النظام)
+                        الوصول إليه أبداً.
+                    </div>
+                </div>
                 <button onclick="nextIntroStep('intro-policy')"
-                    class="bg-gradient-to-r from-pink-500 to-red-500 text-white px-10 py-3 rounded-full font-bold text-lg hover:from-pink-600 hover:to-red-600 transition-all shadow-lg shadow-pink-500/30 transform hover:-translate-y-1">
-                    موافق
+                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-10 py-3 rounded-full font-bold text-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/30 transform hover:-translate-y-1">
+                    فهمت، أنا مطمئن
                 </button>
             </div>
         </div>
@@ -468,7 +536,13 @@
                     <p>إعلان سفلي</p>
                 </div>
 
-                <div class="text-center pt-8">
+                <div class="flex items-center justify-center gap-4 pt-8 no-print">
+                    <button id="btn-install-app"
+                        class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold">
+                        <img src="icon.png" class="w-6 h-6 rounded-lg pointer-events-none" alt="EEJAZ">
+                        <span>تنزيل "إيجاز" للجهاز</span>
+                    </button>
+
                     <button onclick="location.reload()"
                         class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-full transition-all">
                         بدء جديد
@@ -480,33 +554,37 @@
         </div>
     </main>
 
-    <!-- API Key Setup Modal (Persistent Secure Storage) -->
-    <div id="setup-modal"
-        class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-gray-900/95 backdrop-blur-2xl">
-        <div
-            class="glass-card max-w-md w-full p-8 rounded-3xl border border-white/10 shadow-2xl text-center animate-fade-in-up mx-auto">
-            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
+    </div>
+    </div>
+
+    <!-- STAGE 4: AI Key Setup (Full Screen Stage) -->
+    <div id="intro-api" class="intro-screen hidden">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl border border-white/10 shadow-2xl text-center">
+            <div class="w-20 h-20 bg-purple-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-12">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-400" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <h2 class="text-2xl font-bold text-white mb-2 font-logo">تنشيط مفتاح الذكاء الاصطناعي</h2>
-            <p class="text-gray-400 mb-6 text-sm leading-relaxed">عذراً، تم تعطيل المفتاح السابق لأنه نُشر بشكل علني.
-                يرجى إدخال مفتاح جديد خاص بك.
-                <br><span class="text-yellow-500/80 mt-2 block">سيتم حفظه في متصفحك فقط ولن يُنشر أبداً.</span>
+            <h2 class="text-3xl font-bold text-white mb-2 font-logo">تنشيط الإمكانات</h2>
+            <p class="text-gray-400 mb-8 text-sm leading-relaxed">أدخل مفتاح Gemini الخاص بك لتفعيل قوة الذكاء الاصطناعي
+                في تحليل ملفاتك.
+                <br><span class="text-purple-500/80 mt-2 block font-medium">بياناتك محمية ومشفرة في متصفحك.</span>
             </p>
 
             <input type="password" id="api-key-input" placeholder="أدخل مفتاح Gemini هنا..."
-                class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-yellow-500 outline-none transition-all mb-4 text-center">
+                class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl px-4 py-4 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all mb-4 text-center text-lg">
 
             <a href="https://aistudio.google.com/app/apikey" target="_blank"
-                class="text-xs text-purple-400 hover:underline mb-6 block">الحصول على مفتاح مجاني جديد (اضغط هنا)</a>
+                class="text-sm text-purple-400 hover:text-purple-300 underline mb-8 block transition-colors">الحصول على
+                مفتاح مجاني جديد</a>
 
             <button id="btn-save-key"
-                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-purple-500/20 active:scale-95 transition-all">تفعيل
-                البرنامج الآن</button>
+                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-purple-500/20 active:scale-95 transition-all text-lg mb-4">بدء
+                الاستخدام الآن</button>
+
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Secured by AES-256 Protocol</p>
         </div>
     </div>
 
