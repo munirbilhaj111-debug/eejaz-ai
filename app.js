@@ -30,6 +30,29 @@ let circumference = 2 * Math.PI * 40; // r=40
 let GEMINI_API_KEY = localStorage.getItem('EEJAZ_API_KEY_SECURE') || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
+// --- File Hash & Auto-Recycling System ---
+async function calculateFileHash(file) {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getProcessedFiles() {
+    const stored = localStorage.getItem('EEJAZ_PROCESSED_FILES');
+    return stored ? JSON.parse(stored) : {};
+}
+
+function saveProcessedFile(hash, settings) {
+    const files = getProcessedFiles();
+    files[hash] = {
+        timestamp: Date.now(),
+        settings: settings
+    };
+    localStorage.setItem('EEJAZ_PROCESSED_FILES', JSON.stringify(files));
+}
+
+
 // PWA Installation
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -190,10 +213,42 @@ function handleFileSelect(e) {
     if (e.target.files.length) handleFile(e.target.files[0]);
 }
 
-function handleFile(file) {
+async function handleFile(file) {
     currentFile = file;
-    console.log(`File selected: ${file.name}`);
-    switchStep('options');
+    console.log(`📁 File selected: ${file.name}`);
+
+    // حساب بصمة الملف
+    const fileHash = await calculateFileHash(file);
+    const processedFiles = getProcessedFiles();
+
+    if (processedFiles[fileHash]) {
+        // ملف معالج سابقًا - إعادة معالجة تلقائية
+        console.log('🔄 ملف معالج سابقًا - إعادة تدوير تلقائية...');
+        const savedSettings = processedFiles[fileHash].settings;
+
+        // استعادة الإعدادات السابقة
+        if (optLanguage) optLanguage.value = savedSettings.lang || 'ar';
+        if (optCount) {
+            optCount.value = savedSettings.count || 10;
+            if (qCountDisplay) qCountDisplay.textContent = savedSettings.count || 10;
+        }
+
+        // استعادة أنواع الأسئلة المحفوظة
+        if (savedSettings.types && savedSettings.types.length > 0) {
+            const checkboxes = document.querySelectorAll('input[name="qType"]');
+            checkboxes.forEach(cb => {
+                cb.checked = savedSettings.types.includes(cb.value);
+            });
+        }
+
+        // بدء المعالجة مباشرة بعد تأخير قصير
+        switchStep('processing');
+        setTimeout(() => startProcessing(), 300);
+    } else {
+        // ملف جديد - عرض الخيارات
+        console.log('✨ ملف جديد - عرض الخيارات...');
+        switchStep('options');
+    }
 }
 
 function switchStep(stepName) {
@@ -217,6 +272,16 @@ async function startProcessing() {
     setProgress(10, "جاري قراءة الملف...");
 
     try {
+        // حفظ بصمة الملف والإعدادات للكشف التلقائي في المستقبل
+        const fileHash = await calculateFileHash(currentFile);
+        const settings = {
+            lang: optLanguage.value,
+            count: optCount.value,
+            types: Array.from(document.querySelectorAll('input[name="qType"]:checked')).map(cb => cb.value)
+        };
+        saveProcessedFile(fileHash, settings);
+        console.log('💾 تم حفظ إعدادات الملف للكشف التلقائي');
+
         let text = await extractTextFromFile(currentFile);
 
         // --- Smart OCR Check ---
@@ -340,6 +405,7 @@ async function extractPDF(file) {
 // --- Gemini API with Auto-Retry and Multiple Model Support ---
 async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retries = 3) {
     const langName = lang === 'ar' ? "Arabic" : "English";
+    const smartDistribution = document.getElementById('opt-smart-distribution')?.checked ?? true;
 
     // --- Strict Question Distribution Logic ---
     const typesArray = Array.isArray(types) ? types : [types];
@@ -351,8 +417,28 @@ async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retrie
         return `${typeCount} (${t})`;
     }).join(", ");
 
+    // --- Smart Distribution Instructions ---
+    let distributionInstruction = "";
+    if (smartDistribution) {
+        distributionInstruction = `
+        
+### 🎯 SMART CONTENT DISTRIBUTION (CRITICAL):
+- FIRST: Identify the ACTUAL educational content range in the text.
+- Skip any introduction, preface, table of contents, or non-educational sections.
+- Find the FIRST lesson/chapter/topic and the LAST lesson/chapter/topic.
+- Divide this educational content range into ${count} equal sections or parts.
+- Generate EXACTLY 1 question from EACH section.
+- ENSURE questions are distributed EVENLY from the start to the end of educational content.
+- DO NOT generate all questions from the beginning, middle, or a single chapter.
+- If the text has clear chapters/lessons, distribute questions across ALL of them proportionally.
+- If no clear chapters exist, divide the content by page ranges, topics, or logical content blocks.
+- GOAL: Maximum coverage of the entire educational material.
+        `;
+    }
+
     const prompt = `
         You are a strict educational assessment specialist.
+        ${distributionInstruction}
         
         ### ⚠️ STRICT CONTEXT LOCK (ZERO-KNOWLEDGE MODE):
         - You are now in a "ZERO-KNOWLEDGE" state. 
@@ -396,6 +482,7 @@ async function callGeminiAPIWithRetry(text, lang, count, types, fileName, retrie
             ]
         }
     `;
+
 
     const body = { contents: [{ parts: [{ text: prompt }] }] };
 
